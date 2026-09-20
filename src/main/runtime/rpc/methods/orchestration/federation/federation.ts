@@ -24,6 +24,7 @@ import {
   resolveWorkerStartReadinessTimeoutMs
 } from '../../../../../../shared/orchestration-timing-budgets'
 import { assertWorkerStartTaskSpecWithinPromptBudget } from '../worker/worker-start-prompt-budget'
+import { waitForWorkerAgentComposerReady } from '../worker/worker-agent-composer-readiness'
 
 export const ORCHESTRATION_FEDERATION_ATTACH_METHODS = [
   defineMethod({
@@ -227,6 +228,7 @@ export const ORCHESTRATION_FEDERATION_ATTACH_METHODS = [
               : `Agent did not become ready (${wait.status}).`
           )
         }
+        await waitForWorkerAgentComposerReady(runtime, terminalHandle, agent, readinessTimeoutMs)
         const authority = runtime.getOrchestrationDispatchAuthority(terminalHandle)
         const paneKey = authority?.paneKey ?? runtime.getTerminalPaneKey(terminalHandle)
         const processIncarnation =
