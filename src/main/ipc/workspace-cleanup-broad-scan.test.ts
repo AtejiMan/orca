@@ -111,9 +111,10 @@ function makeWorktreeMeta(overrides: Partial<WorktreeMeta> = {}): WorktreeMeta {
     isPinned: false,
     sortOrder: 0,
     lastActivityAt: NOW,
+    terminalSessionSeen: false,
     baseRef: 'origin/main',
     ...overrides
-  } as WorktreeMeta
+  }
 }
 
 const META_BY_WORKTREE_ID: Record<string, WorktreeMeta> = {
@@ -232,7 +233,7 @@ describe('workspace cleanup broad scan opt-in', () => {
           worktreeId,
           executionHostId: 'ssh:ssh-1',
           displayName: 'shared',
-          blockers: []
+          blockers: ['terminal-history-unknown']
         })
       ])
     )
@@ -391,7 +392,7 @@ describe('workspace cleanup broad scan opt-in', () => {
     expect(result.candidates[0]).toMatchObject({
       worktreeId: 'repo-folder::/folder-workspace',
       connectionId: 'ssh-1',
-      blockers: ['main-worktree', 'folder-repo']
+      blockers: ['main-worktree', 'folder-repo', 'terminal-history-unknown']
     })
   })
 

@@ -2,16 +2,16 @@ import { LOCAL_EXECUTION_HOST_ID, type ExecutionHostId } from '../../../shared/e
 import type { WorktreeMeta } from '../../../shared/worktree/meta-types'
 
 type TerminalSessionStore = {
-  getWorktreeMetaForHost: (
+  getWorktreeMetaForHost?: (
     worktreeId: string,
     hostId: ExecutionHostId
   ) => Pick<WorktreeMeta, 'terminalSessionSeen'> | undefined
-  setWorktreeMetaForHost: (
+  setWorktreeMetaForHost?: (
     worktreeId: string,
     hostId: ExecutionHostId,
     updates: Partial<WorktreeMeta>
   ) => unknown
-  flushPendingOrThrowAsync: () => Promise<void>
+  flushPendingOrThrowAsync?: () => Promise<void>
 }
 
 /** Reserve durable cleanup protection before a local PTY can execute a startup command. */
@@ -25,6 +25,9 @@ export async function markWorktreeTerminalSessionSeen(args: {
   // client has no authoritative account of commands run on their host.
   if (
     !store ||
+    !store.getWorktreeMetaForHost ||
+    !store.setWorktreeMetaForHost ||
+    !store.flushPendingOrThrowAsync ||
     connectionId ||
     typeof worktreeId !== 'string' ||
     worktreeId.length === 0 ||

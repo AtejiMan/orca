@@ -8,7 +8,6 @@ import * as path from 'node:path'
 import type { GitStatusResult } from '../../../../shared/git-status-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { GitWorktreeInfo } from '../../../../shared/worktree/types'
-import { getWorkspaceCleanupCandidateIdentity } from '../../../../shared/workspace-cleanup-host-identity'
 import type {
   WorkspaceCleanupScanArgs,
   WorkspaceCleanupScanResult
@@ -110,7 +109,7 @@ describe('workspace cleanup scanned host confirmation removal', () => {
     }
   })
 
-  it('deletes only host B after its real scanned candidate crosses the confirmation path', async () => {
+  it('preserves a remote task with unknown terminal history after confirmation', async () => {
     const scanRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'orca-cleanup-scan-'))
     const hostARoot = fs.mkdtempSync(path.join(os.tmpdir(), 'orca-cleanup-host-a-'))
     const hostBRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'orca-cleanup-host-b-'))
@@ -205,7 +204,11 @@ describe('workspace cleanup scanned host confirmation removal', () => {
     const hostBCandidate = scanned.candidates.find(
       (candidate) => candidate.executionHostId === HOST_B_ID
     )
-    expect(hostBCandidate).toMatchObject({ worktreeId, executionHostId: HOST_B_ID })
+    expect(hostBCandidate).toMatchObject({
+      worktreeId,
+      executionHostId: HOST_B_ID,
+      blockers: expect.arrayContaining(['terminal-history-unknown'])
+    })
     expect(
       scanned.candidates.filter((candidate) => candidate.worktreeId === worktreeId)
     ).toHaveLength(2)
@@ -220,13 +223,15 @@ describe('workspace cleanup scanned host confirmation removal', () => {
     await waitFor(() => expect(removal.result.current.removalInFlight).toBe(false))
 
     expect(fs.existsSync(hostAMarker), 'host A marker must survive host B confirmation').toBe(true)
-    expect(fs.existsSync(hostBMarker), 'host B marker must be deleted').toBe(false)
-    expect(routedHostIds).toEqual([HOST_B_ID])
-    expect(remove).toHaveBeenCalledTimes(1)
+    expect(fs.existsSync(hostBMarker), 'host B marker must survive without terminal history').toBe(
+      true
+    )
+    expect(routedHostIds).toEqual([])
+    expect(remove).not.toHaveBeenCalled()
     expect(scan).toHaveBeenCalledTimes(2)
     expect(scan.mock.calls[1]?.[0]).toEqual(
       expect.objectContaining({ worktreeIds: [worktreeId], refreshActivity: true })
     )
-    expect(onDeselect).toHaveBeenCalledWith([getWorkspaceCleanupCandidateIdentity(hostBCandidate!)])
+    expect(onDeselect).toHaveBeenCalledWith([])
   })
 })
