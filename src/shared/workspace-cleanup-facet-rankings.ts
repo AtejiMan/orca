@@ -24,6 +24,8 @@ const BLOCKER_SEVERITY: Record<WorkspaceCleanupBlocker, number> = {
   'volatile-local-context': 65,
   'recent-visible-context': 60,
   'terminal-liveness-unknown': 55,
+  'terminal-session-seen': 54,
+  'terminal-history-unknown': 53,
   'ssh-disconnected': 50,
   'unpushed-commits': 45,
   'dirty-files': 40,

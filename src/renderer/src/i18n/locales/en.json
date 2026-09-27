@@ -3041,6 +3041,8 @@
             "activeWorkspaceBlocker": "Active workspace",
             "runningTerminalBlocker": "Running terminal process",
             "terminalLivenessUnknownBlocker": "Terminal liveness unknown",
+            "terminalSessionSeenBlocker": "Terminal session was used",
+            "terminalHistoryUnknownBlocker": "Terminal history is unknown",
             "dirtyEditorBufferBlocker": "Unsaved editor buffer",
             "volatileLocalContextBlocker": "Volatile local context",
             "recentVisibleContextBlocker": "Recently visited tabs",

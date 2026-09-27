@@ -1,7 +1,7 @@
 import { isFolderRepo } from '../../shared/repo-kind'
 import type { Repo } from '../../shared/repo-types'
 import type { Worktree } from '../../shared/worktree/types'
-import { getWorktreeExecutionHostId } from '../../shared/execution-host'
+import { getWorktreeExecutionHostId, LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import {
   applyWorkspaceCleanupPolicy,
   createWorkspaceCleanupFingerprint,
@@ -40,6 +40,13 @@ export async function buildWorkspaceCleanupCandidate(args: {
   }
   if (worktree.isPinned) {
     blockers.push('pinned')
+  }
+  const terminalHistoryBlocker = getTerminalHistoryCleanupBlocker(
+    worktree,
+    getWorktreeExecutionHostId(worktree, repo) !== LOCAL_EXECUTION_HOST_ID
+  )
+  if (terminalHistoryBlocker) {
+    blockers.push(terminalHistoryBlocker)
   }
 
   const localContext = buildWorkspaceCleanupLocalContext(worktree)
@@ -101,6 +108,10 @@ export function buildWorkspaceCleanupCandidateFromError(
   worktree: Worktree,
   scannedAt: number
 ): WorkspaceCleanupCandidate {
+  const terminalHistoryBlocker = getTerminalHistoryCleanupBlocker(
+    worktree,
+    getWorktreeExecutionHostId(worktree, repo) !== LOCAL_EXECUTION_HOST_ID
+  )
   return applyWorkspaceCleanupPolicy({
     worktreeId: worktree.id,
     repoId: repo.id,
@@ -113,7 +124,9 @@ export function buildWorkspaceCleanupCandidateFromError(
     tier: 'protected',
     selectedByDefault: false,
     reasons: getWorkspaceCleanupInactivityReasonsForWorkspace(worktree, scannedAt),
-    blockers: ['git-status-error'],
+    blockers: terminalHistoryBlocker
+      ? ['git-status-error', terminalHistoryBlocker]
+      : ['git-status-error'],
     lastActivityAt: worktree.lastActivityAt,
     ...(worktree.createdAt !== undefined ? { createdAt: worktree.createdAt } : {}),
     localContext: buildWorkspaceCleanupLocalContext(worktree),
@@ -130,6 +143,17 @@ export function buildWorkspaceCleanupCandidateFromError(
       lastActivityAt: worktree.lastActivityAt
     })
   })
+}
+
+function getTerminalHistoryCleanupBlocker(
+  worktree: Pick<Worktree, 'terminalSessionSeen'>,
+  remoteHost: boolean
+): 'terminal-session-seen' | 'terminal-history-unknown' | null {
+  if (worktree.terminalSessionSeen === true) {
+    return 'terminal-session-seen'
+  }
+  // The client cannot prove that no command ran directly on another host.
+  return remoteHost || worktree.terminalSessionSeen !== false ? 'terminal-history-unknown' : null
 }
 
 export function buildWorkspaceCleanupLocalContext(

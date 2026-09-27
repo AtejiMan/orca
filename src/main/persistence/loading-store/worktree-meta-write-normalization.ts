@@ -39,6 +39,17 @@ export function mergeWorktreeMetaForWrite(
     ...normalizeGitHubPRSuppressionUpdate(updates),
     ...identity
   }
+  // A missing legacy marker is unknown. Only the first Orca creation write can prove
+  // that no terminal session has attached yet; later writes never clear observed usage.
+  if (existing?.terminalSessionSeen === true) {
+    updated.terminalSessionSeen = true
+  } else if (
+    updated.terminalSessionSeen === undefined &&
+    updates.orcaCreatedAt !== undefined &&
+    existing?.orcaCreatedAt === undefined
+  ) {
+    updated.terminalSessionSeen = false
+  }
   updated.linkedWorkItem = normalizeWorkspaceLinkedItem(updated.linkedWorkItem)
   const sourceContext = normalizeStoredTaskSourceContext(updated.linkedTaskSourceContext)
   updated.linkedTaskSourceContext = isWorkspaceLinkedItemSourceContextMatch(

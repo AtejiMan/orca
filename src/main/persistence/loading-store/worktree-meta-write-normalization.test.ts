@@ -17,6 +17,28 @@ const existingMeta: WorktreeMeta = {
 }
 
 describe('worktree metadata write normalization', () => {
+  it('starts new Orca workspaces unused without treating legacy metadata as unused', () => {
+    expect(mergeWorktreeMetaForWrite(undefined, { orcaCreatedAt: 123 }).terminalSessionSeen).toBe(
+      false
+    )
+    expect(mergeWorktreeMetaForWrite(existingMeta, { comment: 'edited' }).terminalSessionSeen).toBe(
+      undefined
+    )
+    expect(
+      mergeWorktreeMetaForWrite({ ...existingMeta, orcaCreatedAt: 100 }, { orcaCreatedAt: 123 })
+        .terminalSessionSeen
+    ).toBe(undefined)
+  })
+
+  it('never clears a recorded terminal session', () => {
+    expect(
+      mergeWorktreeMetaForWrite(
+        { ...existingMeta, terminalSessionSeen: true },
+        { terminalSessionSeen: false }
+      ).terminalSessionSeen
+    ).toBe(true)
+  })
+
   it('clears GitHub PR suppression on every positive linked PR update', () => {
     const updated = mergeWorktreeMetaForWrite(existingMeta, {
       linkedPR: 42,

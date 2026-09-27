@@ -2764,6 +2764,8 @@
             "activeWorkspaceBlocker": "Espace de travail actif",
             "runningTerminalBlocker": "Processus de terminal en cours",
             "terminalLivenessUnknownBlocker": "Activité du terminal inconnue",
+            "terminalSessionSeenBlocker": "Session de terminal utilisée",
+            "terminalHistoryUnknownBlocker": "Historique du terminal inconnu",
             "dirtyEditorBufferBlocker": "Tampon d'éditeur non enregistré",
             "volatileLocalContextBlocker": "Contexte local volatil",
             "recentVisibleContextBlocker": "Onglets visités récemment",

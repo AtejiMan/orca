@@ -76,6 +76,8 @@ export type WorktreeMeta = {
   pushTarget?: GitPushTarget
   /** Explicit marker stamped when Orca creates the worktree. */
   orcaCreatedAt?: number
+  /** False only for a newly created workspace; true once an Orca terminal has attached. Missing means unknown legacy history. */
+  terminalSessionSeen?: boolean
   orcaCreationSource?: 'desktop' | 'runtime' | 'cli' | 'ssh'
   /** Workspace layout active when Orca created the worktree. */
   orcaCreationWorkspaceLayout?: OrcaWorkspaceLayout

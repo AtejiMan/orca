@@ -23,6 +23,8 @@ export type WorkspaceCleanupBlocker =
   | 'active-workspace'
   | 'running-terminal'
   | 'terminal-liveness-unknown'
+  | 'terminal-session-seen'
+  | 'terminal-history-unknown'
   | 'dirty-editor-buffer'
   | 'volatile-local-context'
   | 'recent-visible-context'
@@ -151,6 +153,8 @@ const LEGACY_WORKSPACE_CLEANUP_HARD_BLOCKERS: ReadonlySet<WorkspaceCleanupBlocke
   'active-workspace',
   'running-terminal',
   'terminal-liveness-unknown',
+  'terminal-session-seen',
+  'terminal-history-unknown',
   'dirty-editor-buffer',
   'volatile-local-context',
   'live-agent',
@@ -166,14 +170,22 @@ const LEGACY_WORKSPACE_CLEANUP_HARD_BLOCKERS: ReadonlySet<WorkspaceCleanupBlocke
 const WORKSPACE_CLEANUP_QUEUE_BLOCKERS: ReadonlySet<WorkspaceCleanupBlocker> = new Set([
   'main-worktree',
   'folder-repo',
-  'ssh-disconnected'
+  'ssh-disconnected',
+  'terminal-session-seen',
+  'terminal-history-unknown'
 ])
 
 export const WORKSPACE_CLEANUP_FORCE_REMOVE_BLOCKERS: ReadonlySet<WorkspaceCleanupBlocker> =
   new Set(['dirty-files', 'unpushed-commits', 'unknown-base'])
 
 export const WORKSPACE_CLEANUP_BULK_SELECT_EXCLUSIONS: ReadonlySet<WorkspaceCleanupBlocker> =
-  new Set(['active-workspace', 'live-agent', 'dismissed'])
+  new Set([
+    'active-workspace',
+    'live-agent',
+    'dismissed',
+    'terminal-session-seen',
+    'terminal-history-unknown'
+  ])
 
 export function canQueueWorkspaceCleanupCandidate(
   candidate: Pick<WorkspaceCleanupCandidate, 'blockers'>

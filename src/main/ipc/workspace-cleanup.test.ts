@@ -124,6 +124,7 @@ function makeWorktreeMeta(overrides: Partial<WorktreeMeta> = {}): WorktreeMeta {
     isPinned: false,
     sortOrder: 0,
     lastActivityAt: NOW,
+    terminalSessionSeen: false,
     ...overrides
   }
 }
@@ -138,12 +139,14 @@ function makeStore(
   } = {}
 ): Store {
   const baseRef = Object.hasOwn(options, 'baseRef') ? options.baseRef : 'origin/main'
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: This scan fixture supplies the Store reads reached by these tests; all other methods are intentionally absent.
   return {
     getRepos: () => options.repos ?? [REPO],
     getWorktreeMeta: () => ({
       linkedPR: null,
       linkedIssue: options.linkedIssue ?? null,
       lastActivityAt: options.lastActivityAt ?? NOW - 40 * 24 * 60 * 60 * 1000,
+      terminalSessionSeen: false,
       baseRef,
       diffComments: options.diffComments
     }),
@@ -212,6 +215,22 @@ describe('workspace cleanup scan', () => {
         upstreamAhead: 0
       }
     })
+  })
+
+  it('protects workspaces with a terminal session and legacy workspaces with unknown history', async () => {
+    for (const terminalSessionSeen of [true, undefined]) {
+      const store = makeStore()
+      const meta = store.getWorktreeMeta('repo-1::/repo-feature')!
+      vi.spyOn(store, 'getWorktreeMeta').mockReturnValue({ ...meta, terminalSessionSeen })
+      const result = await scanWorkspaceCleanup(store)
+      expect(result.candidates[0]).toMatchObject({
+        tier: 'protected',
+        selectedByDefault: false,
+        blockers: [
+          terminalSessionSeen === true ? 'terminal-session-seen' : 'terminal-history-unknown'
+        ]
+      })
+    }
   })
 
   it('reports cleanup scan progress as inactive workspaces are checked', async () => {
@@ -464,8 +483,9 @@ describe('workspace cleanup scan', () => {
     expect(result.errors).toEqual([])
     expect(result.candidates[0]).toMatchObject({
       connectionId: 'ssh-1',
-      tier: 'ready',
-      selectedByDefault: true,
+      tier: 'protected',
+      selectedByDefault: false,
+      blockers: ['terminal-history-unknown'],
       reasons: ['idle-clean']
     })
   })

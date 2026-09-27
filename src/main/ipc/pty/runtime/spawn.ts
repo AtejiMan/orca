@@ -16,6 +16,7 @@ import { buildRuntimePtySpawnOptions } from './spawn-options'
 import { executeRuntimePtySpawn } from './spawn-execute'
 import { commitRuntimePtySpawn } from './spawn-commit'
 import { createRuntimePtySpawnState, type RuntimePtySpawnArgs } from './spawn-state'
+import { markWorktreeTerminalSessionSeen } from '../worktree-terminal-session'
 
 function toRuntimeSpawnReply(result: {
   id: string
@@ -94,6 +95,11 @@ export async function spawnPtyFromRuntimeController(
     if (earlyReserved) {
       return toRuntimeSpawnReply(earlyReserved)
     }
+    await markWorktreeTerminalSessionSeen({
+      store: deps.store,
+      worktreeId: args.worktreeId,
+      connectionId: args.connectionId
+    })
     await executeRuntimePtySpawn(ctx)
     return toRuntimeSpawnReply(await commitRuntimePtySpawn(ctx))
   } catch (err) {

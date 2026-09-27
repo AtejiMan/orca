@@ -426,6 +426,31 @@ describe('workspace cleanup removal and protection', () => {
     expect(removeWorktree).not.toHaveBeenCalled()
   })
 
+  it('refuses removal when a terminal session appears in the fresh preflight scan', async () => {
+    const approvedCandidate = makeCandidate({ executionHostId: 'local' })
+    const protectedCandidate = makeCandidate({
+      executionHostId: 'local',
+      tier: 'protected',
+      blockers: ['terminal-session-seen']
+    })
+    const scan = vi.fn().mockResolvedValue({
+      scannedAt: NOW,
+      candidates: [protectedCandidate],
+      errors: []
+    } satisfies WorkspaceCleanupScanResult)
+    installWorkspaceCleanupApi(scan)
+    const removeWorktree = vi.fn().mockResolvedValue({ ok: true })
+    const store = createCleanupTestStore(removeWorktree)
+
+    const result = await store.getState().removeWorkspaceCleanupCandidates([WORKTREE_ID], {
+      approvedCandidates: [approvedCandidate]
+    })
+
+    expect(result.removedIds).toEqual([])
+    expect(result.failures).toHaveLength(1)
+    expect(removeWorktree).not.toHaveBeenCalled()
+  })
+
   it('still force-removes rows whose approved candidate already carried git risk', async () => {
     const approvedCandidate = makeCandidate({
       executionHostId: 'local',

@@ -119,6 +119,8 @@ export type Worktree = {
    *  seed a replacement terminal if the user later reopens the worktree after
    *  closing every visible surface. */
   createdWithAgent?: TuiAgent
+  /** Persisted terminal-session evidence; missing means cleanup cannot prove this workspace was unused. */
+  terminalSessionSeen?: boolean
   /** True while an auto-named workspace is waiting for the first agent message
    *  to drive the branch/title rename. */
   pendingFirstAgentMessageRename?: boolean

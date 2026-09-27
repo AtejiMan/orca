@@ -8,6 +8,7 @@ import { executePtyIpcSpawn } from './spawn-execute'
 import { commitPtyIpcSpawn } from './spawn-commit'
 import { createPtyIpcSpawnState, type PtyIpcSpawnState } from './spawn-state'
 import { triggerPtySpawnPushTargetMaterialization } from './spawn-push-target-materialization'
+import { markWorktreeTerminalSessionSeen } from '../worktree-terminal-session'
 import type { PtySpawnIpcArgs, PtySpawnIpcDeps } from './spawn-types'
 
 function releaseAbandonedAgentTeamsLeader(ctx: PtyIpcSpawnState): void {
@@ -52,6 +53,11 @@ export async function runPtyIpcSpawn(deps: PtySpawnIpcDeps, args: PtySpawnIpcArg
       releaseAbandonedAgentTeamsLeader(ctx)
       return earlyReserved
     }
+    await markWorktreeTerminalSessionSeen({
+      store: deps.store,
+      worktreeId: args.worktreeId,
+      connectionId: args.connectionId
+    })
     await executePtyIpcSpawn(ctx)
     return await commitPtyIpcSpawn(ctx)
   } catch (err) {

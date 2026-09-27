@@ -32,6 +32,16 @@ export function getWorkspaceCleanupBlockerLabel(blocker: WorkspaceCleanupBlocker
         'auto.components.workspace.cleanup.candidateRow.terminalLivenessUnknownBlocker',
         'Terminal liveness unknown'
       )
+    case 'terminal-session-seen':
+      return translate(
+        'auto.components.workspace.cleanup.candidateRow.terminalSessionSeenBlocker',
+        'Terminal session was used'
+      )
+    case 'terminal-history-unknown':
+      return translate(
+        'auto.components.workspace.cleanup.candidateRow.terminalHistoryUnknownBlocker',
+        'Terminal history is unknown'
+      )
     case 'dirty-editor-buffer':
       return translate(
         'auto.components.workspace.cleanup.candidateRow.dirtyEditorBufferBlocker',
