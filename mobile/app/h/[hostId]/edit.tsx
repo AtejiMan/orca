@@ -18,6 +18,7 @@ import { loadHosts, updateHostNameAndEndpoint } from '../../../src/transport/hos
 import { displayHostEndpoint } from '../../../src/transport/host-endpoint'
 import { resolveHostEndpointEdit } from '../../../src/transport/host-endpoint-edit'
 import { useForceReconnect, usePrimeHosts } from '../../../src/transport/client-context'
+import { useClipboardWriter } from '../../../src/platform/clipboard'
 import type { HostProfile } from '../../../src/transport/types'
 
 export default function EditHostScreen() {
@@ -26,6 +27,7 @@ export default function EditHostScreen() {
   const { hostId } = useLocalSearchParams<{ hostId: string }>()
   const primeHosts = usePrimeHosts()
   const forceReconnectHost = useForceReconnect()
+  const clipboard = useClipboardWriter()
 
   const [host, setHost] = useState<HostProfile | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -33,6 +35,8 @@ export default function EditHostScreen() {
   const [address, setAddress] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [copiedHostId, setCopiedHostId] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState<string | null>(null)
   // Why: setSaving is async, so a second trigger before the re-render could
   // still read stale state and re-enter handleSave; the ref closes that race.
   const savingRef = useRef(false)
@@ -79,6 +83,20 @@ export default function EditHostScreen() {
     endpointEdit.kind !== 'invalid' &&
     (nameChanged || endpointChanged) &&
     !saving
+
+  async function handleCopyHostId() {
+    if (!host) {
+      return
+    }
+    setCopiedHostId(null)
+    setCopyError(null)
+    try {
+      await clipboard.writeText(host.id)
+      setCopiedHostId(host.id)
+    } catch (err) {
+      setCopyError(err instanceof Error ? err.message : 'Failed to copy host ID.')
+    }
+  }
 
   async function handleSave() {
     if (!host || !hostId || !endpointEdit || savingRef.current) {
@@ -196,6 +214,25 @@ export default function EditHostScreen() {
               phone connects — they do not re-pair. Use this when the same desktop is reachable at a
               different IP (for example home LAN vs Tailscale).
             </Text>
+
+            <Text style={styles.label}>Host ID</Text>
+            <Text style={styles.preview} selectable>
+              {host.id}
+            </Text>
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={() => void handleCopyHostId()}
+              accessibilityRole="button"
+              accessibilityLabel="Copy Host ID"
+            >
+              <Text style={styles.secondaryButtonText}>Copy Host ID</Text>
+            </Pressable>
+            {copiedHostId === host.id ? (
+              <Text style={styles.hint} accessibilityLiveRegion="polite">
+                Host ID copied
+              </Text>
+            ) : null}
+            {copyError ? <Text style={styles.errorText}>{copyError}</Text> : null}
 
             <Text style={styles.label}>Name</Text>
             <TextInput

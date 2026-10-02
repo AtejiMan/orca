@@ -9,6 +9,7 @@ const dependencies = vi.hoisted(() => ({
   loadHosts: vi.fn(),
   primeHosts: vi.fn(),
   updateHostNameAndEndpoint: vi.fn(),
+  writeClipboardText: vi.fn(),
   hostId: 'host-1' as string | undefined
 }))
 
@@ -45,6 +46,10 @@ vi.mock('./transport/host-store', () => ({
 vi.mock('./transport/client-context', () => ({
   useForceReconnect: () => dependencies.forceReconnectHost,
   usePrimeHosts: () => dependencies.primeHosts
+}))
+
+vi.mock('./platform/clipboard', () => ({
+  useClipboardWriter: () => ({ writeText: dependencies.writeClipboardText })
 }))
 
 const HOST_FIXTURE = {
@@ -124,10 +129,44 @@ describe('edit host handleSave', () => {
     dependencies.loadHosts.mockReset().mockResolvedValue([HOST_FIXTURE])
     dependencies.primeHosts.mockReset()
     dependencies.updateHostNameAndEndpoint.mockReset().mockResolvedValue(undefined)
+    dependencies.writeClipboardText.mockReset().mockResolvedValue(undefined)
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it('copies the stored host ID without saving edits, credentials, or reconnecting', async () => {
+    const id = 'host-1789393821234'
+    dependencies.hostId = id
+    dependencies.loadHosts.mockResolvedValueOnce([{ ...HOST_FIXTURE, id }])
+    const renderer = await renderEditHostRoute()
+    setFieldValue(renderer, 'Name', 'Unsaved name')
+    setFieldValue(renderer, 'Address', '192.168.1.20:6768')
+    const button = renderer.root.findByProps({ accessibilityLabel: 'Copy Host ID' })
+    await act(async () => button.props.onPress())
+
+    expect(dependencies.writeClipboardText).toHaveBeenCalledExactlyOnceWith(id)
+    expect(findText(renderer, 'Host ID copied')).toBe(true)
+    expect(dependencies.updateHostNameAndEndpoint).not.toHaveBeenCalled()
+    expect(dependencies.forceReconnectHost).not.toHaveBeenCalled()
+    expect(dependencies.back).not.toHaveBeenCalled()
+    act(() => renderer.unmount())
+  })
+
+  it('reports clipboard failure and lets the user retry', async () => {
+    dependencies.writeClipboardText.mockRejectedValueOnce(new Error('Clipboard unavailable'))
+    const renderer = await renderEditHostRoute()
+    const button = renderer.root.findByProps({ accessibilityLabel: 'Copy Host ID' })
+    await act(async () => button.props.onPress())
+    expect(findText(renderer, 'Clipboard unavailable')).toBe(true)
+    expect(findText(renderer, 'Host ID copied')).toBe(false)
+
+    await act(async () => button.props.onPress())
+    expect(findText(renderer, 'Clipboard unavailable')).toBe(false)
+    expect(findText(renderer, 'Host ID copied')).toBe(true)
+    expect(dependencies.updateHostNameAndEndpoint).not.toHaveBeenCalled()
+    act(() => renderer.unmount())
   })
 
   it('rename-only save updates only the name and does not reconnect', async () => {

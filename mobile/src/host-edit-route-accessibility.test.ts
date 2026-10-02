@@ -46,6 +46,10 @@ vi.mock('./transport/client-context', () => ({
   usePrimeHosts: () => dependencies.primeHosts
 }))
 
+vi.mock('./platform/clipboard', () => ({
+  useClipboardWriter: () => ({ writeText: vi.fn() })
+}))
+
 async function renderEditHostRoute(): Promise<ReactTestRenderer> {
   let renderer: ReactTestRenderer | null = null
   await act(async () => {

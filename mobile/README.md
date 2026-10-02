@@ -63,6 +63,16 @@ For the Android emulator, use `ws://10.0.2.2:6768`. For a physical phone, use th
 
 If the phone has a stale host entry, remove it from the app and pair again.
 
+## Host ID 복사
+
+호스트 목록에서 해당 호스트의 **Edit host** 화면을 열고 **Copy Host ID**를 누르면
+이 휴대폰에 저장된 호스트 ID가 복사됩니다. 이름이나 주소를 저장할 필요는 없습니다.
+복사 실패는 화면에 표시되며 다시 시도할 수 있습니다.
+
+세션 링크 형식은 `orca://h/<hostId>/session/<worktreeId>?paneKey=<paneKey>`입니다.
+각 ID는 `encodeURIComponent`로 인코딩합니다. `hostId`는 휴대폰별 값이므로
+데스크톱의 runtime ID, device ID, 페어링 시각으로 대체하지 마세요.
+
 ## Development Paths
 
 ### Android Phone
